@@ -1,0 +1,198 @@
+# MS-CAT 监督微调配置文件
+
+# 随机种子
+seed: 42
+
+# 数据配置
+data:
+  data_path: "data/AMPds2.h5"
+  window_size: 240  # 窗口大小（分钟）
+  overlap: 120      # 重叠大小（分钟）
+  batch_size: 32
+  num_workers: 8
+  pin_memory: true
+  
+  # 数据分割
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+  
+  # 设备配置
+  target_devices: ["DWE", "FRE", "HPE", "WOE", "CDE", "GRE", "FGE"]  # AMPds2设备
+  power_threshold: 10.0         # 功率阈值（W）
+  
+  # 特征配置（与预训练保持一致）
+  features:
+    base_channels: ["P_total", "Q_total", "S_total", "I", "V", "PF"]
+    derived_features:
+      enable_delta: true
+      enable_rolling_stats: true
+      enable_energy: true
+      enable_frequency: true
+      enable_time_features: true
+    rolling_windows: [3, 5, 10]
+    frequency_bands: 3
+  
+  # 归一化
+  normalization:
+    method: "robust"
+    per_channel: true
+  
+  # 数据增强
+  augmentation:
+    enable: true
+    noise_std: 0.01              # 微调时减少噪声
+    amplitude_range: [0.95, 1.05] # 微调时减少幅度变化
+    channel_dropout: 0.05        # 微调时减少dropout
+    time_jitter: 1
+    
+    # 合成叠加增强
+    synthetic_overlay:
+      enable: true
+      probability: 0.3           # 合成叠加概率
+      max_devices: 3             # 最大叠加设备数
+
+# 模型配置
+model:
+  # 基础架构参数（与预训练保持一致）
+  d_model: 192
+  num_heads: 6
+  local_layers: 4
+  global_layers: 3
+  window_size: 32
+  sparsity_factor: 4
+  conv_kernel_size: 7
+  fusion_type: "weighted_sum"
+  use_time_features: true
+  learnable_pos: false
+  dropout: 0.1
+  max_len: 5000
+  
+  # 多任务损失权重
+  regression_weight: 1.0        # 回归损失权重
+  classification_weight: 0.5    # 分类损失权重
+  
+  # Focal Loss参数
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+  
+  # 优化器参数
+  learning_rate: 1e-3
+  min_learning_rate: 1e-5
+  weight_decay: 1e-4
+  max_epochs: 100
+  
+  # 冻结策略
+  freeze_encoder_epochs: 5      # 前5个epoch冻结编码器
+  freeze_ratio: 0.5             # 冻结前50%的参数
+  
+  # CRF后处理
+  use_crf: true
+  min_on_duration: 5            # 最小开启持续时间（分钟）
+  min_off_duration: 3           # 最小关闭持续时间（分钟）
+  power_threshold: 10.0         # 功率阈值（W）
+
+# 训练配置
+max_epochs: 100
+early_stopping_patience: 15
+gradient_clip_val: 1.0
+accumulate_grad_batches: 1
+
+# 验证配置
+val_check_interval: 1.0
+log_every_n_steps: 50
+
+# 检查点配置
+checkpoint:
+  monitor: "val/MAE_total"
+  mode: "min"
+  save_top_k: 3
+  save_last: true
+  filename: "nilm_best_{epoch:02d}_{val/MAE_total:.4f}"
+
+# 日志配置
+logging:
+  log_dir: "outputs/finetune/logs"
+  name: "finetune_logs"
+  version: null
+
+# 硬件配置
+hardware:
+  gpus: 1
+  precision: "16-mixed"
+  strategy: null
+
+# 评估配置
+evaluation:
+  # 回归指标
+  regression_metrics: ["MAE", "RMSE", "SAE"]
+  
+  # 分类指标
+  classification_metrics: ["Precision", "Recall", "F1"]
+  
+  # 可视化
+  visualization:
+    enable: true
+    sample_days: 2             # 可视化天数
+    devices_per_plot: 4        # 每个图表的设备数
+
+# 训练参数
+training:
+  max_epochs: 200
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1
+  check_val_every_n_epoch: 1
+  enable_progress_bar: true
+  enable_model_summary: true
+  deterministic: false
+  benchmark: true
+
+# 优化器
+optimizer:
+  name: "AdamW"
+  lr: 1e-3
+  weight_decay: 1e-4
+  betas: [0.9, 0.999]
+  eps: 1e-8
+
+# 学习率调度
+scheduler:
+  name: "CosineAnnealingLR"
+  T_max: 200
+  eta_min: 1e-6
+  warmup_epochs: 10
+  warmup_start_lr: 1e-6
+
+# 损失函数配置
+loss:
+  regression:
+    type: "MAE"  # MAE, MSE, Huber
+    weight: 1.0
+  classification:
+    type: "FocalLoss"  # BCE, FocalLoss
+    weight: 0.5
+    focal_alpha: 0.25
+    focal_gamma: 2.0
+  total_power_consistency:
+    weight: 0.1
+
+# 预训练权重加载
+pretrain:
+  checkpoint_path: null  # 预训练模型路径
+  load_encoder_only: true
+  freeze_encoder_epochs: 10  # 前10个epoch冻结编码器
+  freeze_ratio: 0.5  # 冻结前50%的层
+
+# 硬件配置
+hardware:
+  accelerator: "gpu"
+  devices: 1
+  precision: 16
+  strategy: "auto"
+  
+# 知识蒸馏（可选）
+distillation:
+  enable: false
+  teacher_model_path: null
+  temperature: 4.0
+  alpha: 0.3                   # 蒸馏损失权重

@@ -1,0 +1,220 @@
+# NILM-MSCAT 快速开始配置文件
+# 适用于初次使用和快速测试
+
+# 数据配置
+data:
+  data_path: "data/AMPds2.h5"  # 数据集路径
+  window_length: 512        # 输入窗口大小
+  step_size: 256           # 滑动窗口步长
+  batch_size: 32           # 批次大小
+  num_workers: 4           # 数据加载进程数
+  pin_memory: true         # 固定内存加速
+  power_threshold: 10.0    # 功率阈值
+
+# 模型配置
+model:
+  # 基础参数
+  input_dim: 1             # 输入特征维度 (主电表功率)
+  d_model: 256             # 模型隐藏维度
+  
+  # MS-CAT 编码器
+  num_heads: 8             # 注意力头数
+  num_layers: 6            # Transformer层数
+  dropout: 0.1             # Dropout率
+  
+  # TCN 参数
+  tcn_channels: [64, 128, 256]  # TCN通道数
+  kernel_size: 3           # 卷积核大小
+  
+  # 多任务头
+  regression_hidden_dim: 128    # 回归头隐藏维度
+  event_hidden_dim: 64         # 事件检测头隐藏维度
+  
+  # 损失权重
+  power_loss_weight: 1.0       # 功率预测损失权重
+  event_loss_weight: 0.5       # 事件检测损失权重
+  
+  # Focal Loss (用于事件检测)
+  use_focal_loss: true
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+
+# 训练配置
+trainer:
+  # 基础训练参数
+  max_epochs: 100          # 最大训练轮数
+  accelerator: "cpu"       # 使用CPU设备
+  devices: 1               # 使用1个CPU
+  precision: "32"          # 32位精度训练 (CPU模式)
+  enable_progress_bar: true # 启用进度条
+  enable_model_summary: true # 启用模型摘要
+  
+  # 验证和检查点
+  val_check_interval: 1.0  # 验证频率
+  check_val_every_n_epoch: 1
+  
+  # 梯度相关
+  gradient_clip_val: 1.0   # 梯度裁剪
+  accumulate_grad_batches: 1
+  
+  # 早停和学习率调度
+  enable_checkpointing: true
+  enable_progress_bar: true
+  enable_model_summary: true
+  
+  # 日志配置
+  log_every_n_steps: 50
+  
+# 优化器配置
+optimizer:
+  name: "AdamW"            # 优化器类型
+  lr: 1e-4                 # 学习率
+  weight_decay: 1e-5       # 权重衰减
+  
+  # 不同组件的学习率
+  encoder_lr: 5e-5         # 编码器学习率 (微调时较小)
+  head_lr: 1e-4            # 任务头学习率
+
+# 学习率调度器
+scheduler:
+  name: "CosineAnnealingLR" # 调度器类型
+  T_max: 100               # 余弦退火周期
+  eta_min: 1e-6            # 最小学习率
+
+# 回调函数配置
+callbacks:
+  # 早停
+  early_stopping:
+    monitor: "val_loss"     # 监控指标
+    patience: 10            # 耐心值
+    mode: "min"             # 最小化
+    min_delta: 1e-4         # 最小改进
+  
+  # 模型检查点
+  model_checkpoint:
+    monitor: "val_loss"     # 监控指标
+    mode: "min"             # 最小化
+    save_top_k: 3           # 保存最好的3个模型
+    save_last: true         # 保存最后一个模型
+    filename: "epoch_{epoch:02d}-val_loss_{val_loss:.4f}"
+  
+  # 学习率监控
+  lr_monitor:
+    logging_interval: "step"
+    log_momentum: false
+
+# TensorBoard 配置
+logging:
+  tensorboard:
+    save_dir: "tensorboard_logs"  # TensorBoard日志目录
+    name: "nilm_mscat"           # 实验名称
+    version: null                # 版本号 (自动生成)
+    
+  # 可视化配置
+  visualization:
+    log_attention_weights: true   # 记录注意力权重
+    log_feature_importance: true  # 记录特征重要性
+    log_predictions: true         # 记录预测结果
+    log_frequency: 10             # 记录频率 (每N个epoch)
+
+# 预训练特定配置
+pretrain:
+  # 掩码策略
+  mask_ratio: 0.15         # 掩码比例
+  mask_strategy: "random"   # 掩码策略: random, block, adaptive
+  
+  # 重建损失
+  reconstruction_loss: "mse"  # 重建损失类型
+  reconstruction_weight: 1.0  # 重建损失权重
+
+# 微调特定配置
+finetune:
+  # 冻结策略
+  freeze_encoder: false    # 是否冻结编码器
+  freeze_epochs: 0         # 冻结轮数
+  
+  # 渐进式解冻
+  progressive_unfreezing: false
+  unfreeze_schedule: [10, 20, 30]  # 解冻时间表
+
+# 数据增强配置 (可选)
+augmentation:
+  # 噪声注入
+  noise_std: 0.01          # 噪声标准差
+  noise_prob: 0.3          # 噪声概率
+  
+  # 时间扭曲
+  time_warp: false         # 时间扭曲
+  warp_strength: 0.1       # 扭曲强度
+  
+  # 幅度缩放
+  magnitude_scaling: true  # 幅度缩放
+  scale_range: [0.8, 1.2]  # 缩放范围
+
+# 评估配置
+evaluation:
+  # 评估指标
+  metrics:
+    - "mae"                 # 平均绝对误差
+    - "rmse"                # 均方根误差
+    - "sae"                 # 信号聚合误差
+    - "f1"                  # F1分数
+    - "precision"           # 精确率
+    - "recall"              # 召回率
+  
+  # 阈值设置
+  event_threshold: 0.5     # 事件检测阈值
+  power_threshold: 10.0    # 功率阈值 (W)
+
+# 可解释性配置
+interpretability:
+  # 注意力可视化
+  attention_visualization: true
+  attention_layers: [0, 2, 4]     # 可视化的层
+  
+  # 特征重要性
+  feature_importance: true
+  importance_method: "gradient"   # 重要性计算方法
+  
+  # 激活可视化
+  activation_visualization: true
+  activation_layers: ["encoder.0", "encoder.2"]
+
+# 输出配置
+output:
+  # 保存路径
+  save_dir: "outputs"      # 输出根目录
+  experiment_name: "nilm_mscat_experiment"  # 实验名称
+  
+  # 保存选项
+  save_predictions: true   # 保存预测结果
+  save_attention: true     # 保存注意力权重
+  save_features: false     # 保存中间特征
+  
+  # 格式选项
+  save_format: "both"      # 保存格式: csv, pickle, both
+
+# 系统配置
+system:
+  # 随机种子
+  seed: 42                 # 随机种子
+  
+  # 性能优化
+  compile_model: false     # 编译模型 (PyTorch 2.0+)
+  use_amp: true            # 自动混合精度
+  
+  # 内存优化
+  memory_efficient: true   # 内存高效模式
+  gradient_checkpointing: false  # 梯度检查点
+
+# 调试配置
+debug:
+  # 调试模式
+  debug_mode: false        # 调试模式
+  fast_dev_run: false      # 快速开发运行
+  
+  # 日志级别
+  log_level: "INFO"        # 日志级别: DEBUG, INFO, WARNING, ERROR
+  
+  # 性能分析
+  profiler: null           # 性能分析器: simple, advanced, pytorch

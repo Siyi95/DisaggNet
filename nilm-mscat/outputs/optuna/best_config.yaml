@@ -1,0 +1,137 @@
+augmentation:
+  magnitude_scaling: true
+  noise_prob: 0.3
+  noise_std: 0.01
+  scale_range:
+  - 0.8
+  - 1.2
+  time_warp: false
+  warp_strength: 0.1
+callbacks:
+  early_stopping:
+    min_delta: 1e-4
+    mode: min
+    monitor: val_loss
+    patience: 10
+  lr_monitor:
+    log_momentum: false
+    logging_interval: step
+  model_checkpoint:
+    filename: epoch_{epoch:02d}-val_loss_{val_loss:.4f}
+    mode: min
+    monitor: val_loss
+    save_last: true
+    save_top_k: 3
+data:
+  batch_size: 4
+  data_path: data/AMPds2.h5
+  num_workers: 4
+  pin_memory: true
+  power_threshold: 10.0
+  step_size: 16
+  window_length: 1024
+debug:
+  debug_mode: false
+  fast_dev_run: false
+  log_level: INFO
+  profiler: null
+evaluation:
+  event_threshold: 0.5
+  metrics:
+  - mae
+  - rmse
+  - sae
+  - f1
+  - precision
+  - recall
+  power_threshold: 10.0
+finetune:
+  freeze_encoder: false
+  freeze_epochs: 0
+  progressive_unfreezing: false
+  unfreeze_schedule:
+  - 10
+  - 20
+  - 30
+interpretability:
+  activation_layers:
+  - encoder.0
+  - encoder.2
+  activation_visualization: true
+  attention_layers:
+  - 0
+  - 2
+  - 4
+  attention_visualization: true
+  feature_importance: true
+  importance_method: gradient
+logging:
+  tensorboard:
+    name: nilm_mscat
+    save_dir: tensorboard_logs
+    version: null
+  visualization:
+    log_attention_weights: true
+    log_feature_importance: true
+    log_frequency: 10
+    log_predictions: true
+model:
+  d_model: 256
+  dropout: 0.1385544546091395
+  event_hidden_dim: 64
+  event_loss_weight: 0.6421828898610914
+  focal_alpha: 0.29193169525008544
+  focal_gamma: 2.0623181704887235
+  input_dim: 1
+  kernel_size: 5
+  num_heads: 16
+  num_layers: 5
+  power_loss_weight: 1.3724492391215277
+  regression_hidden_dim: 128
+  tcn_channels:
+  - 32
+  - 64
+  - 128
+  use_crf: true
+  use_focal_loss: true
+optimizer:
+  encoder_lr: 5e-5
+  head_lr: 1e-4
+  lr: 0.0006772610734308566
+  name: AdamW
+  weight_decay: 2.9188475508978996e-06
+output:
+  experiment_name: nilm_mscat_experiment
+  save_attention: true
+  save_dir: outputs
+  save_features: false
+  save_format: both
+  save_predictions: true
+pretrain:
+  mask_ratio: 0.15
+  mask_strategy: random
+  reconstruction_loss: mse
+  reconstruction_weight: 1.0
+scheduler:
+  T_max: 100
+  eta_min: 1e-6
+  name: CosineAnnealingLR
+system:
+  compile_model: false
+  gradient_checkpointing: false
+  memory_efficient: true
+  seed: 42
+  use_amp: true
+trainer:
+  accelerator: cpu
+  accumulate_grad_batches: 1
+  check_val_every_n_epoch: 1
+  devices: 1
+  enable_checkpointing: true
+  enable_model_summary: true
+  enable_progress_bar: true
+  gradient_clip_val: 1.0
+  log_every_n_steps: 50
+  max_epochs: 95
+  precision: '32'
+  val_check_interval: 1.0

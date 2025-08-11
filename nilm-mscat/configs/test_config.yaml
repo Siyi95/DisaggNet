@@ -1,0 +1,63 @@
+data:
+  augment: true
+  batch_size: 16
+  data_path: /home/yu/Workspace/DisaggNet/nilm-mscat/data/AMPds2.h5
+  min_samples: 200
+  num_workers: 4
+  power_threshold: 10.0
+  step_size: 32
+  window_length: 128
+finetune:
+  d_model: 192
+  device_names:
+  - device_01
+  - device_02
+  - device_03
+  - device_04
+  - device_05
+  - device_06
+  - device_07
+  - device_08
+  - device_09
+  - device_10
+  dim_feedforward: 512
+  dropout: 0.1
+  encoder_lr: 0.0001
+  event_loss_weight: 0.5
+  freeze_encoder: true
+  gradient_clip_val: 1.0
+  head_lr: 0.001
+  input_dim: 38
+  max_epochs: 50
+  nhead: 6
+  num_devices: 10
+  num_layers: 6
+  patience: 15
+  power_loss_smoothing: 0.1
+  power_loss_weight: 1.0
+  power_scale_factor: 1000.0
+  use_crf: false
+  weight_decay: 0.0001
+output:
+  experiment_name: nilm_complete_training
+  save_dir: ./outputs
+  save_top_k: 3
+pretrain:
+  d_model: 192
+  dim_feedforward: 512
+  dropout: 0.1
+  input_dim: 38
+  learning_rate: 0.001
+  mask_ratio: 0.15
+  max_epochs: 30
+  nhead: 6
+  num_layers: 6
+  patience: 10
+  weight_decay: 0.0001
+training:
+  accelerator: cpu
+  accumulate_grad_batches: 2
+  devices: 1
+  log_every_n_steps: 50
+  precision: 32
+  val_check_interval: 0.25

@@ -3,9 +3,17 @@ import matplotlib.patches as patches
 from matplotlib.patches import FancyBboxPatch, ConnectionPatch
 import numpy as np
 
-# 设置中文字体
-plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
-plt.rcParams['axes.unicode_minus'] = False
+# 添加项目根目录到Python路径
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
+
+# 导入字体配置模块
+from src.nilm_disaggregation.utils.font_config import setup_chinese_fonts
+
+# 设置绘图样式和中文字体支持
+setup_chinese_fonts()
 
 def create_detailed_network_architecture():
     """

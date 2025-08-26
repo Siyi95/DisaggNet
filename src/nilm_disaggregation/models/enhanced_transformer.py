@@ -112,41 +112,33 @@ class EnhancedTransformerNILM(nn.Module):
         """
         # 输入嵌入
         x = self.input_embedding(x)  # [B, L, d_model]
-        x = torch.nan_to_num(x, nan=0.0, posinf=1e6, neginf=-1e6)
         
         # 多尺度卷积特征提取
         conv_input = x.transpose(1, 2)  # [B, d_model, L]
         conv_features = self.multi_scale_conv(conv_input)
         conv_features = self.channel_attention(conv_features)
         conv_features = conv_features.transpose(1, 2)  # [B, L, d_model]
-        conv_features = torch.nan_to_num(conv_features, nan=0.0, posinf=1e6, neginf=-1e6)
         
         # 位置编码
         x = self.pos_encoding(conv_features)
         x = self.dropout(x)
-        x = torch.nan_to_num(x, nan=0.0, posinf=1e6, neginf=-1e6)
         
         # Transformer层
         for layer in self.transformer_layers:
             x = layer(x)
-            x = torch.nan_to_num(x, nan=0.0, posinf=1e6, neginf=-1e6)
         
         # 双向LSTM
         lstm_out, _ = self.bi_lstm(x)
-        lstm_out = torch.nan_to_num(lstm_out, nan=0.0, posinf=1e6, neginf=-1e6)
         
         # 时间注意力
         attn_out, _ = self.temporal_attention(lstm_out, lstm_out, lstm_out)
-        attn_out = torch.nan_to_num(attn_out, nan=0.0, posinf=1e6, neginf=-1e6)
         
         # 特征融合
         fused_features = torch.cat([lstm_out, attn_out], dim=-1)
         final_features = self.feature_fusion(fused_features)
-        final_features = torch.nan_to_num(final_features, nan=0.0, posinf=1e6, neginf=-1e6)
         
         # 全局平均池化
         pooled_features = torch.mean(final_features, dim=1)  # [B, d_model]
-        pooled_features = torch.nan_to_num(pooled_features, nan=0.0, posinf=1e6, neginf=-1e6)
         
         # 多任务输出
         power_outputs = [head(pooled_features) for head in self.power_heads]
@@ -155,10 +147,8 @@ class EnhancedTransformerNILM(nn.Module):
         power_pred = torch.cat(power_outputs, dim=1)  # [B, num_appliances]
         state_pred = torch.cat(state_outputs, dim=1)  # [B, num_appliances]
         
-        # 最终数值稳定性检查
-        power_pred = torch.nan_to_num(power_pred, nan=0.0, posinf=1e6, neginf=-1e6)
-        state_pred = torch.nan_to_num(state_pred, nan=0.0, posinf=1.0, neginf=0.0)
-        state_pred = torch.clamp(state_pred, 0.0, 1.0)  # 确保状态预测在[0,1]范围内
+        # 确保状态预测在[0,1]范围内
+        state_pred = torch.clamp(state_pred, 0.0, 1.0)
         
         return power_pred, state_pred
     

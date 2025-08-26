@@ -793,9 +793,17 @@ def create_optimization_plots(study, save_dir):
     try:
         import optuna.visualization as vis
         
-        # 设置中文字体
-        plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
-        plt.rcParams['axes.unicode_minus'] = False
+        # 添加项目根目录到Python路径
+        import sys
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent
+        sys.path.append(str(project_root))
+        
+        # 导入字体配置模块
+        from src.nilm_disaggregation.utils.font_config import setup_chinese_fonts
+        
+        # 设置中文字体支持
+        setup_chinese_fonts()
         
         # 1. 优化历史
         fig = vis.plot_optimization_history(study)

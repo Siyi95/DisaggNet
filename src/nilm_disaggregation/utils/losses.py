@@ -22,25 +22,33 @@ class CombinedLoss(nn.Module):
         # 状态预测损失
         state_loss = self.bce_loss(state_pred, state_true)
         
-        # 相关性损失
-        correlation_loss = 0
+        # 相关性损失 - 使用更稳定的计算方式
+        correlation_loss = torch.tensor(0.0, device=power_pred.device, requires_grad=True)
+        
         for i in range(power_pred.size(1)):
             pred_i = power_pred[:, i]
             true_i = power_true[:, i]
             
+            # 使用torch.var和torch.cov来计算相关系数，更稳定
             pred_mean = torch.mean(pred_i)
             true_mean = torch.mean(true_i)
             
             pred_centered = pred_i - pred_mean
             true_centered = true_i - true_mean
             
-            numerator = torch.sum(pred_centered * true_centered)
-            denominator = torch.sqrt(torch.sum(pred_centered**2) * torch.sum(true_centered**2))
+            # 添加小的epsilon避免除零
+            pred_std = torch.sqrt(torch.mean(pred_centered**2) + 1e-8)
+            true_std = torch.sqrt(torch.mean(true_centered**2) + 1e-8)
             
-            correlation = numerator / (denominator + 1e-8)
-            correlation_loss += (1 - correlation)
+            # 计算相关系数
+            covariance = torch.mean(pred_centered * true_centered)
+            correlation = covariance / (pred_std * true_std + 1e-8)
+            
+            # 确保相关系数在[-1, 1]范围内
+            correlation = torch.clamp(correlation, -1.0, 1.0)
+            correlation_loss = correlation_loss + (1 - correlation)
         
-        correlation_loss /= power_pred.size(1)
+        correlation_loss = correlation_loss / power_pred.size(1)
         
         total_loss = (self.power_weight * power_loss + 
                      self.state_weight * state_loss + 

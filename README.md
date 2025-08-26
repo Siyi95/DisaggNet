@@ -1,227 +1,158 @@
-# DisaggNet - 增强版Transformer NILM模型
+# DisaggNet - 非侵入式负荷监测系统
 
-一个基于增强版Transformer架构的非侵入式负荷监测（NILM）深度学习框架，用于家庭电器功耗分解。
+基于深度学习的非侵入式负荷监测(NILM)系统，使用增强的Transformer架构进行电器负荷分解。
 
-## 项目特性
+## 核心特性
 
-- **增强版Transformer架构**：集成多尺度卷积、通道注意力、位置编码和双向LSTM
-- **模块化设计**：基于PyTorch Lightning的清晰代码结构
-- **多任务学习**：同时预测功率和设备状态
-- **自动超参数优化**：集成Optuna进行自动调优
-- **丰富的可视化**：训练曲线、性能指标和功率分解图表
-- **灵活的配置系统**：基于YAML的配置管理
+### 模型架构
+- **增强Transformer**: 多尺度卷积、改进位置编码、增强注意力机制
+- **自适应损失函数**: 动态调整功率、状态和相关性损失权重
+- **多头预测**: 同时预测功率和设备状态
+
+### 训练策略
+- **高级优化器**: AdamW、SGD等多种优化器支持
+- **学习率调度**: 余弦退火、步长衰减等策略
+- **数据增强**: 噪声添加、时间偏移、缩放等技术
+- **梯度裁剪**: 防止梯度爆炸
+- **早停机制**: 防止过拟合
+
+### 超参数优化
+- **Optuna集成**: 高效的贝叶斯优化
+- **多维搜索**: 模型架构、训练参数、损失权重等
+- **剪枝策略**: 自动终止表现差的试验
+
+### 数据处理
+- **AMPds2支持**: 完整的AMPds2数据集加载和预处理
+- **CSV格式**: 支持CSV格式数据加载
+- **序列化处理**: 时间序列数据的滑动窗口处理
+- **数据增强**: 多种数据增强技术
 
 ## 项目结构
 
 ```
 DisaggNet/
+├── main.py                    # 主入口脚本
 ├── src/
 │   └── nilm_disaggregation/
-│       ├── data/                 # 数据模块
-│       │   ├── __init__.py
-│       │   ├── dataset.py        # 数据集定义
-│       │   └── datamodule.py     # PyTorch Lightning数据模块
-│       ├── models/               # 模型模块
-│       │   ├── __init__.py
-│       │   ├── components.py     # 模型组件
-│       │   └── enhanced_transformer.py  # 主模型
-│       ├── training/             # 训练模块
-│       │   ├── __init__.py
-│       │   └── lightning_module.py  # PyTorch Lightning模块
-│       └── utils/                # 工具模块
-│           ├── __init__.py
-│           ├── config.py         # 配置管理
-│           ├── losses.py         # 损失函数
-│           ├── metrics.py        # 评估指标
-│           └── visualization.py  # 可视化工具
-├── scripts/                      # 脚本目录
-│   ├── train.py                 # 训练脚本
-│   ├── evaluate.py              # 评估脚本
-│   └── optimize.py              # 超参数优化脚本
-├── configs/                      # 配置文件
-│   └── default_config.yaml      # 默认配置
-├── requirements.txt              # 依赖包
-└── README.md                    # 项目说明
+│       ├── data/              # 数据处理模块
+│       │   ├── complete_ampds2_dataset.py    # 完整AMPds2数据集
+│       │   ├── csv_data_loader.py           # CSV数据加载器
+│       │   ├── datamodule.py                # PyTorch Lightning数据模块
+│       │   ├── dataset.py                   # 基础数据集
+│       │   ├── demo_complete_dataset_usage.py # 数据集使用演示
+│       │   ├── explore_ampds2_structure.py   # 数据结构探索
+│       │   └── improved_dataset.py          # 改进的数据集
+│       ├── models/            # 模型架构
+│       │   ├── components.py                # 模型组件
+│       │   ├── enhanced_model_architecture.py # 增强模型架构
+│       │   └── enhanced_transformer.py      # 增强Transformer
+│       ├── training/          # 训练相关
+│       │   ├── advanced_strategies.py       # 高级训练策略
+│       │   ├── evaluate.py                  # 模型评估
+│       │   ├── lightning_module.py          # Lightning模块
+│       │   ├── optimization.py              # 超参数优化
+│       │   └── train.py                     # 训练脚本
+│       └── utils/             # 工具函数
+│           ├── config.py                    # 配置管理
+│           ├── font_config.py               # 字体配置
+│           ├── losses.py                    # 损失函数
+│           ├── metrics.py                   # 评估指标
+│           ├── test_chinese_fonts.py        # 中文字体测试
+│           ├── visualization.py             # 可视化工具
+│           └── visualize_complete_ampds2.py # AMPds2数据可视化
+├── Dataset/                   # 数据集目录
+└── outputs/                   # 输出目录
 ```
 
-## 安装
-
-### 环境要求
-
-- Python 3.8+
-- PyTorch 2.0+
-- CUDA 11.8+ (可选，用于GPU加速)
-
-### 安装依赖
+## 安装依赖
 
 ```bash
-# 克隆项目
-git clone <repository-url>
-cd DisaggNet
-
-# 创建虚拟环境（推荐）
-conda create -n nilm python=3.9
-conda activate nilm
-
-# 安装依赖
-pip install -r requirements.txt
+pip install torch pytorch-lightning optuna h5py pandas numpy matplotlib seaborn scikit-learn
 ```
 
-## 快速开始
+## 数据集准备
 
-### 1. 准备数据
+1. 下载AMPds2数据集
+2. 将数据文件放置在 `Dataset/dataverse_files/` 目录下
+3. 确保数据文件格式正确（HDF5或CSV格式）
 
-数据应该是HDF5格式，包含以下结构：
-- `main_power`: 主功率数据 (N, 1)
-- `appliance_power`: 设备功率数据 (N, num_appliances)
-- `appliance_status`: 设备状态数据 (N, num_appliances)
+## 主要功能
 
-### 2. 配置设置
+### 1. 模型训练
+```bash
+# 基础训练
+python main.py train --data-dir ./Dataset/dataverse_files
 
-编辑 `configs/default_config.yaml` 文件，设置数据路径和模型参数：
+# 自定义参数训练
+python main.py train --data-dir ./Dataset/dataverse_files --epochs 100 --batch-size 64 --learning-rate 1e-3
+```
+
+### 2. 超参数优化
+```bash
+# 超参数优化
+python main.py optimize --data-dir ./Dataset/dataverse_files --trials 50 --type hyperparams
+
+# 损失权重优化
+python main.py optimize --data-dir ./Dataset/dataverse_files --trials 20 --type loss_weights
+```
+
+### 3. 模型评估
+```bash
+python main.py evaluate --checkpoint ./outputs/model.ckpt --data-dir ./Dataset/dataverse_files
+```
+
+### 4. 数据可视化
+```bash
+python main.py visualize --data-dir ./Dataset/dataverse_files
+```
+
+### 5. 演示运行
+```bash
+python main.py demo --data-dir ./Dataset/dataverse_files
+```
+
+### 6. 数据探索
+```bash
+python main.py explore --data-dir ./Dataset/dataverse_files
+```
+
+## 输出说明
+
+- `outputs/training/`: 训练输出（模型检查点、日志等）
+- `outputs/optimization/`: 优化结果（最佳参数、试验历史等）
+- `outputs/evaluation/`: 评估结果（指标报告、可视化图表等）
+- `outputs/visualization/`: 数据可视化图表
+- `outputs/demo/`: 演示运行结果
+
+## 配置文件
+
+项目支持YAML格式的配置文件，可以通过 `--config` 参数指定：
 
 ```yaml
-data:
-  data_path: "path/to/your/data.h5"
-  appliances: ["fridge", "washer_dryer", "microwave", "dishwasher"]
-  sequence_length: 512
-  batch_size: 32
-
 model:
   d_model: 256
-  nhead: 8
-  num_layers: 6
+  n_heads: 8
+  n_layers: 4
   dropout: 0.1
 
 training:
-  max_epochs: 100
-  learning_rate: 0.001
+  learning_rate: 1e-4
+  batch_size: 32
+  epochs: 50
+
+data:
+  sequence_length: 128
+  appliances: ['fridge', 'washer_dryer', 'microwave', 'dishwasher']
 ```
 
-### 3. 训练模型
+## 注意事项
 
-```bash
-# 使用默认配置训练
-python scripts/train.py --data_path path/to/your/data.h5
+1. **内存使用**: 大型数据集可能需要大量内存，建议使用GPU训练
+2. **数据格式**: 确保数据格式与加载器兼容
+3. **路径设置**: 使用绝对路径避免路径问题
+4. **依赖版本**: 确保PyTorch和相关库版本兼容
 
-# 使用自定义配置
-python scripts/train.py --config configs/custom_config.yaml --data_path path/to/your/data.h5
 
-# 从检查点恢复训练
-python scripts/train.py --data_path path/to/your/data.h5 --resume_from_checkpoint path/to/checkpoint.ckpt
-```
-
-### 4. 评估模型
-
-```bash
-# 评估训练好的模型
-python scripts/evaluate.py --checkpoint path/to/best_model.ckpt --data_path path/to/your/data.h5
-
-# 不生成可视化图表
-python scripts/evaluate.py --checkpoint path/to/best_model.ckpt --data_path path/to/your/data.h5 --no_visualization
-```
-
-### 5. 超参数优化
-
-```bash
-# 运行Optuna优化
-python scripts/optimize.py --data_path path/to/your/data.h5 --n_trials 100
-
-# 使用自定义配置和更多试验
-python scripts/optimize.py --config configs/optimization_config.yaml --data_path path/to/your/data.h5 --n_trials 200 --timeout 7200
-```
-
-## 模型架构
-
-### 增强版Transformer NILM模型
-
-模型采用多层次的架构设计：
-
-1. **多尺度卷积特征提取**：捕获不同时间尺度的特征
-2. **通道注意力机制**：增强重要特征通道
-3. **位置编码**：为序列数据添加位置信息
-4. **Transformer编码器**：捕获长距离依赖关系
-5. **双向LSTM**：处理序列的前后文信息
-6. **时间注意力**：关注重要的时间步
-7. **特征融合**：结合多层次特征
-8. **多任务输出**：同时预测功率和状态
-
-### 损失函数
-
-组合损失函数包括：
-- **功率损失**：均方误差（MSE）
-- **状态损失**：二元交叉熵（BCE）
-- **相关性损失**：增强预测与真实值的相关性
-
-## 使用示例
-
-### 基本训练
-
-```python
-from src.nilm_disaggregation.data import NILMDataModule
-from src.nilm_disaggregation.training import EnhancedTransformerNILMModule
-from src.nilm_disaggregation.utils import load_config
-import pytorch_lightning as pl
-
-# 加载配置
-config = load_config('configs/default_config.yaml')
-
-# 创建数据模块
-data_module = NILMDataModule(
-    data_path=config.get('data.data_path'),
-    sequence_length=config.get('data.sequence_length'),
-    batch_size=config.get('data.batch_size')
-)
-
-# 创建模型
-model = EnhancedTransformerNILMModule(
-    model_params=config.get('model'),
-    loss_params=config.get('loss'),
-    learning_rate=config.get('training.learning_rate')
-)
-
-# 创建训练器
-trainer = pl.Trainer(
-    max_epochs=config.get('training.max_epochs'),
-    accelerator='gpu' if torch.cuda.is_available() else 'cpu'
-)
-
-# 训练模型
-trainer.fit(model, data_module)
-```
-
-## 性能指标
-
-模型评估使用以下指标：
-
-- **MAE (Mean Absolute Error)**：平均绝对误差
-- **RMSE (Root Mean Square Error)**：均方根误差
-- **R² (Coefficient of Determination)**：决定系数
-- **Correlation**：皮尔逊相关系数
-- **F1-Score**：设备状态分类的F1分数
-
-## 故障排除
-
-### 常见问题
-
-1. **CUDA内存不足**
-   - 减小批次大小
-   - 减少序列长度
-   - 使用梯度累积
-
-2. **训练不收敛**
-   - 调整学习率
-   - 检查数据质量
-   - 增加正则化
-
-3. **数据加载错误**
-   - 检查数据文件格式
-   - 验证数据路径
-   - 确认设备列表匹配
-
-## 贡献
-
-欢迎提交Issue和Pull Request来改进项目。
 
 ## 许可证
 

@@ -18,6 +18,15 @@ from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
 
+# 添加项目根目录到Python路径
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent
+sys.path.append(str(project_root))
+
+# 导入字体配置模块
+from src.nilm_disaggregation.utils.font_config import setup_chinese_fonts
+
 # 导入增强版Transformer模型组件
 class EnhancedMultiScaleConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_sizes=[3, 5, 7]):
@@ -751,9 +760,8 @@ def create_visualizations(results, power_preds, power_trues, appliances, save_di
     """
     创建可视化图表
     """
-    # 设置中文字体
-    plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
-    plt.rcParams['axes.unicode_minus'] = False
+    # 设置中文字体支持
+    setup_chinese_fonts()
     
     # 1. 性能指标对比图
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))

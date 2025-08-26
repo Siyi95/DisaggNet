@@ -1,8 +1,20 @@
 """可视化模块"""
 
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import seaborn as sns
 import numpy as np
+from pathlib import Path
+import pandas as pd
+from typing import List, Dict, Any, Optional, Tuple
+import warnings
 import os
+
+# 导入字体配置模块
+from .font_config import setup_chinese_fonts
+
+# 设置中文字体支持
+setup_chinese_fonts()
 
 
 def create_visualizations(results, power_preds, power_trues, appliances, save_dir):
@@ -19,9 +31,7 @@ def create_visualizations(results, power_preds, power_trues, appliances, save_di
     # 确保保存目录存在
     os.makedirs(save_dir, exist_ok=True)
     
-    # 设置中文字体
-    plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
-    plt.rcParams['axes.unicode_minus'] = False
+
     
     # 1. 性能指标对比图
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
